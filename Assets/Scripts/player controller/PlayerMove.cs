@@ -55,7 +55,6 @@ public class NewMonoBehaviourScript : MonoBehaviour
         if (_horizontal_look != z)
         {
             arge += Time.deltaTime * _horizontal_look * speed_rotation;
-            Debug.Log(arge);
         }
         if (arge > 0.5f)
         {

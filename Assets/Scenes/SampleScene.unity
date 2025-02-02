@@ -692,6 +692,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1700497527959123364, guid: a3cda545f4d582b4988b9e3394ed56df, type: 3}
+      propertyPath: speed_rotation
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 2399340837133545427, guid: a3cda545f4d582b4988b9e3394ed56df, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -740,6 +744,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: aa45ee666af1da34fa96ca6788418321, type: 2}
+    - target: {fileID: 8930981627032742311, guid: a3cda545f4d582b4988b9e3394ed56df, type: 3}
+      propertyPath: m_Constraints
+      value: 88
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
