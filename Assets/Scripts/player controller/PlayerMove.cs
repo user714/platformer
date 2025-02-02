@@ -51,7 +51,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
             Debug.Log(collisionInfo.contacts[i].point - transform.position);
 
-            if ((point.x < -0.5f || point.x > 0.5f))
+            if ((point.x < -0.5f || point.x > 0.5f) && point.y > 0)
             {
                 _jump_move = false;
             }
