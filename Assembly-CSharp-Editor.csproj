@@ -544,6 +544,10 @@
       <HintPath>D:\unity\6000.0.36f1\Editor\Data\PlaybackEngines\WebGLSupport\UnityEditor.WebGL.Extensions.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEditor.OSXStandalone.Extensions">
+      <HintPath>D:\unity\6000.0.36f1\Editor\Data\PlaybackEngines\MacStandaloneSupport\UnityEditor.OSXStandalone.Extensions.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEditor.VisionOS.Extensions">
       <HintPath>D:\unity\6000.0.36f1\Editor\Data\PlaybackEngines\VisionOSPlayer\UnityEditor.VisionOS.Extensions.dll</HintPath>
       <Private>False</Private>
@@ -650,6 +654,10 @@
     </Reference>
     <Reference Include="UnityEditor.Apple.Extensions.Common">
       <HintPath>D:\unity\6000.0.36f1\Editor\Data\PlaybackEngines\VisionOSPlayer\UnityEditor.Apple.Extensions.Common.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEditor.iOS.Extensions.Xcode">
+      <HintPath>D:\unity\6000.0.36f1\Editor\Data\PlaybackEngines\MacStandaloneSupport\UnityEditor.iOS.Extensions.Xcode.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="mscorlib">
