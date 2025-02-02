@@ -55,7 +55,18 @@ public class NewMonoBehaviourScript : MonoBehaviour
         if (_horizontal_look != z)
         {
             arge += Time.deltaTime * _horizontal_look * speed_rotation;
+            Debug.Log(arge);
         }
+        if (arge > 0.5f)
+        {
+            arge = 0.5f;
+        }
+
+        if (arge < -0.5f)
+        {
+            arge = -0.5f;
+        }
+
 
         transform.LookAt(new Vector3((x + transform.position.x), transform.position.y, (z + transform.position.z)));
         if (_horizontal_look == z)
