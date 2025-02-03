@@ -18,6 +18,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     float _jump_move_x = 0;
     bool _jump_play = false;
     bool _jump_move = false;
+    bool _jump_collider_bootom = false;
     Vector3 _start_jump_position = Vector3.zero;
 
 
@@ -33,30 +34,52 @@ public class NewMonoBehaviourScript : MonoBehaviour
     void Start()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        _rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezeRotationX;
 
-       
     }
 
-    void OnCollisionStay(Collision collisionInfo)
+    void jampCollision(Collision collisionInfo)
     {
         for (int i = 0; i < collisionInfo.contacts.Length; i++)
         {
             Vector3 point = collisionInfo.contacts[i].point - transform.position;
-            if ((point.y  < -1 || point.y > 1))
+            if ((point.y < -1 || point.y > 1))
             {
                 JumpStop();
- 
 
             }
 
-            Debug.Log(collisionInfo.contacts[i].point - transform.position);
+
+            if ((point.y <= -1))
+            {
+                _jump_collider_bootom = true;
+
+                
+            }
+
+
+
+             
 
             if ((point.x < -0.5f || point.x > 0.5f) && point.y > 0)
             {
                 _jump_move = false;
             }
         }
-       
+
+    }
+
+     void OnCollisionEnter(Collision collisionInfo)
+    {
+        jampCollision(collisionInfo);
+
+        //_jump_move = false;
+    }
+
+    void OnCollisionStay(Collision collisionInfo)
+    {
+        jampCollision(collisionInfo);
+
         //_jump_move = false;
     }
 
@@ -66,27 +89,21 @@ public class NewMonoBehaviourScript : MonoBehaviour
     {
         _jump_play = false;
         _jump_move_x = 0;
+        _rigidbody.constraints =  RigidbodyConstraints.None;
+        _rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezeRotationX;
+      
         //_rigidbody.isKinematic = false;
 
-       //Debug.Log("Завершаю прыжок");
+        //Debug.Log("Завершаю прыжок");
     }
     void Jump()
     {
-        Vector3 input = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
-        if (_jump_play == false && input != Vector3.zero)
-        {
-            _jump_move = true;
-        }
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            _jump_play = true;
-      
-
-        }
+         
 
 
         if (_jump_play && _jump_move_x == 0)
         {
+            _rigidbody.constraints = RigidbodyConstraints.FreezePosition | RigidbodyConstraints.FreezeRotation;
             _start_jump_position = transform.position;
             //Debug.Log("Начинаю прыжок");
         }
@@ -97,16 +114,44 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
         if (_jump_play)
         {
+            bool exit_jump =  false;
 
-            _jump_move_x += ((len_jump / jump_time) * Time.deltaTime);
-
+            _jump_move_x += ((len_jump / jump_time) * Time.fixedDeltaTime);
+            
             //_rigidbody.isKinematic = true;
             float posdition_x = transform.position.x;
             if (_jump_move)
             {
                 posdition_x = (_start_jump_position.x + (_jump_move_x * _horizontal_look));
             }
-            transform.position = new Vector3(posdition_x, _start_jump_position.y + jump_amplitude.Evaluate(_jump_move_x), transform.position.z);
+
+            RaycastHit hit;
+            // Does the ray intersect any objects excluding the player layer
+            if (Physics.Raycast(new Vector3(posdition_x, _start_jump_position.y + jump_amplitude.Evaluate(len_jump), transform.position.z), transform.TransformDirection(new Vector3(0, -1, 0)), out hit, Mathf.Infinity))
+
+            {   
+
+                if(transform.position.y - (transform.TransformDirection(new Vector3(0, -1, 0)) * hit.distance).y <= 2)
+                {
+                    exit_jump =  true;
+                    JumpStop();
+                }
+                Debug.DrawRay(transform.position, transform.TransformDirection(new Vector3(0, -1, 0)) * hit.distance, Color.yellow);
+                Debug.Log("Did Hit" + (transform.position.y - (transform.TransformDirection(new Vector3(0, -1, 0)) * hit.distance).y));
+            }
+            else
+            {
+                Debug.DrawRay(transform.position, transform.TransformDirection(new Vector3(0, -1, 0)) * 1000, Color.white);
+                Debug.Log("Did not Hit");
+            }
+
+            if(exit_jump == false)
+            {
+                transform.position = new Vector3(posdition_x, _start_jump_position.y + jump_amplitude.Evaluate(_jump_move_x), transform.position.z);
+
+
+            }
+
 
 
 
@@ -129,13 +174,38 @@ public class NewMonoBehaviourScript : MonoBehaviour
     void FixedUpdate()
     {
         // пенести  сюда логику 
+
+        Jump();
     }
     void Update()
     {
-        Jump();
-
-
+        bool _jump_move_ = false;
         Vector3 input = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
+        if (_jump_play == false && input != Vector3.zero)
+        {
+            _jump_move_ = true;
+        }
+        else
+        {
+            _jump_move_ = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space) && _jump_collider_bootom)
+        {
+            if (_jump_move_)
+            {
+                _jump_move = true;
+            }
+            
+            _jump_play = true;
+            _jump_collider_bootom = false;
+
+
+        }
+
+        //Debug.Log(_jump_play + " " + _jump_collider_bootom);
+
+         
         if (input.x < 0)
         {
             input.x = -1;
@@ -167,16 +237,17 @@ public class NewMonoBehaviourScript : MonoBehaviour
         {
             _arge = -0.5f;
         }
+ 
+         transform.LookAt(new Vector3((x + transform.position.x), transform.position.y, (z + transform.position.z)));
+         if (_horizontal_look == z)
+         {
+             _rigidbody.MovePosition(transform.position + input * Time.fixedDeltaTime * speed);
+         }
+
+       
 
 
-        transform.LookAt(new Vector3((x + transform.position.x), transform.position.y, (z + transform.position.z)));
-        if (_horizontal_look == z)
-        {
-           _rigidbody.MovePosition(transform.position + input * Time.fixedDeltaTime * speed);
-        }
-        
-        
-      
-        
+
+
     }
 }
