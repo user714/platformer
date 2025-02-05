@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteAlways]
+ 
 public class Platform : MonoBehaviour
 {
     private Vector3 coursor =   Vector3.zero;

@@ -20,7 +20,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     bool _jump_move = false;
 
     GameObject platform;
-    Vector3 platform_pre_pos;
+    float deplata_platform_x;
 
 
 
@@ -292,8 +292,22 @@ public class NewMonoBehaviourScript : MonoBehaviour
         {
             _arge = -0.5f;
         }
- 
-         transform.LookAt(new Vector3((x + transform.position.x), transform.position.y, (z + transform.position.z)));
+        if (!platform)
+        {
+            transform.LookAt(new Vector3((x + transform.position.x), transform.position.y, (z + transform.position.z)));
+        }
+        else
+        {
+            if (_jump_play == false)
+            {
+                Vector3 tr = platform.gameObject.transform.position;
+                tr.x -= deplata_platform_x;
+                tr.y += 1.5f;
+                transform.position = tr;
+
+                transform.LookAt(new Vector3((x + transform.position.x), transform.position.y, (z + transform.position.z)));
+            }
+        }
          if (_horizontal_look == z)
          {
             
@@ -305,12 +319,20 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
                 if (platform)
                 {
-                   Vector3 delata =  platform.gameObject.transform.position - platform_pre_pos;
-                    move += delata;
-                    platform_pre_pos = platform.gameObject.transform.position;
+                    deplata_platform_x -= move.x;
+                    //Vector3 delata =  platform.gameObject.transform.position - transform.position;
+                    Vector3 tr = platform.gameObject.transform.position;
+                    tr.x -= deplata_platform_x;
+                    tr.y += 1.5f;
+                    transform.position = tr;
+
+                }
+                else
+                {
+                    _rigidbody.Move(move);
                 }
  
-                _rigidbody.Move(move);
+                
             }
             
          }
@@ -332,7 +354,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     {
       
         platform = other.gameObject;
-        platform_pre_pos = other.transform.position;
+        deplata_platform_x = other.transform.position.x - transform.position.x;
     }
 
     private void OnTriggerExit(Collider other)
