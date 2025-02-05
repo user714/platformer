@@ -1,25 +1,35 @@
-using System.Security.Cryptography;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.Audio;
-using UnityEngine.EventSystems;
-using UnityEngine.UIElements;
-using static UnityEngine.GraphicsBuffer;
-
-
+using System.Collections.Generic;
  
+using UnityEngine;
+ 
+using UnityEngine.SceneManagement;
+ 
+ 
+
+[ExecuteAlways]
+
 public class NewMonoBehaviourScript : MonoBehaviour
 {
 
-    Rigidbody _rigidbody;
-    Vector3 _move = Vector3.zero;
+    CharacterController _rigidbody;
+    Vector3 _jump_vector = new Vector3(1,0,0);
     float _horizontal_look = 1;
     float _arge = 0;
     float _jump_move_x = 0;
     bool _jump_play = false;
     bool _jump_move = false;
-    bool _jump_collider_bootom = false;
+
+    GameObject platform;
+    Vector3 platform_pre_pos;
+
+
+
+    bool _use_finish_jump_points = false;
+    Vector3 _finish_jump_points = Vector3.zero;
+
     Vector3 _start_jump_position = Vector3.zero;
+    Vector3 _start_jump_position_mirror = Vector3.zero;
+
 
 
     [Header("Скорость задаеться в метрах в скунду 1.4м/c скорость шага")] 
@@ -30,71 +40,106 @@ public class NewMonoBehaviourScript : MonoBehaviour
     public AnimationCurve jump_amplitude = new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 0));
     [Header("Время прыжка в секундах")]
     public float jump_time = 1;
+    [Header("Использовать  контроллируйтемый прыжолк")]
+    public bool jump_controll  = false;
+
 
     void Start()
     {
-        _rigidbody = GetComponent<Rigidbody>();
-        _rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezeRotationX;
+        _rigidbody = GetComponent<CharacterController>();
+    
 
     }
 
-    void jampCollision(Collision collisionInfo)
+
+     
+
+    
+  
+    List<Vector3> getPointsCollisionJump(AnimationCurve jump_amplitude, Vector3 _start_jump_position, int sectors = 7, int  coint_points = 1, float _horizontal_look = 1)
     {
-        for (int i = 0; i < collisionInfo.contacts.Length; i++)
+        List<Vector3> result_points_list = new List<Vector3>();
+
+
+        Keyframe start_key = jump_amplitude.keys[0];
+        Keyframe finish_key = jump_amplitude.keys[jump_amplitude.length - 1];
+        float len_jump = finish_key.time - start_key.time;
+ 
+
+        for (int i = 1; i <= sectors; i++)
         {
-            Vector3 point = collisionInfo.contacts[i].point - transform.position;
-            if ((point.y < -1 || point.y > 1))
-            {
-                JumpStop();
-
-            }
+           
 
 
-            if ((point.y <= -1))
-            {
-                _jump_collider_bootom = true;
-
-                
-            }
-
-
+            Vector3 this_poin = new Vector3(_start_jump_position.x + ((len_jump / sectors) * (i - 1) * _horizontal_look) , _start_jump_position.y + jump_amplitude.Evaluate(((len_jump / sectors) * (i - 1))), _start_jump_position.z);
 
              
 
-            if ((point.x < -0.5f || point.x > 0.5f) && point.y > 0)
+
+            Vector3 next_poin = new Vector3(_start_jump_position.x + ((len_jump / sectors) * i * _horizontal_look) , _start_jump_position.y + jump_amplitude.Evaluate(((len_jump / sectors) * i)), _start_jump_position.z);
+
+            
+
+
+
+            Vector3 direction = this_poin - next_poin;
+
+
+            Ray ray = new Ray(this_poin, next_poin - this_poin);
+            RaycastHit hit;
+
+            Debug.DrawRay(this_poin, next_poin - this_poin, Color.green);
+
+            if (Physics.Raycast(ray, out hit))
+
             {
-                _jump_move = false;
+                if (hit.collider.name != gameObject.name && hit.collider.name != "platform")
+                {
+                    if (Vector3.Distance(this_poin, next_poin) > hit.distance && i < sectors)
+                    {
+                        Debug.DrawLine((hit.point), new Vector3(hit.point.x - 1, hit.point.y, hit.point.z), Color.blue);
+                        Debug.DrawLine((hit.point), new Vector3(hit.point.x + 1, hit.point.y, hit.point.z), Color.blue);
+                        Debug.DrawLine((hit.point), new Vector3(hit.point.x, hit.point.y - 1, hit.point.z), Color.blue);
+                        Debug.DrawLine((hit.point), new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Color.blue);
+
+                        result_points_list.Add(hit.point);
+                    }
+                    else if (i == sectors)
+                    {
+                        Debug.DrawLine((this_poin), hit.point, Color.green);
+
+
+                        Debug.DrawLine((hit.point), new Vector3(hit.point.x - 1, hit.point.y, hit.point.z), Color.blue);
+                        Debug.DrawLine((hit.point), new Vector3(hit.point.x + 1, hit.point.y, hit.point.z), Color.blue);
+                        Debug.DrawLine((hit.point), new Vector3(hit.point.x, hit.point.y - 1, hit.point.z), Color.blue);
+                        Debug.DrawLine((hit.point), new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Color.blue);
+
+
+                        result_points_list.Add(hit.point);
+                    }
+
+                     
+
+                    if (result_points_list.Count == coint_points)
+                    {
+                       // break;
+                    }
+                }
             }
+
+
         }
+ 
+        return result_points_list;
 
     }
 
-     void OnCollisionEnter(Collision collisionInfo)
-    {
-        jampCollision(collisionInfo);
-
-        //_jump_move = false;
-    }
-
-    void OnCollisionStay(Collision collisionInfo)
-    {
-        jampCollision(collisionInfo);
-
-        //_jump_move = false;
-    }
-
-    
 
     void JumpStop()
     {
         _jump_play = false;
         _jump_move_x = 0;
-        _rigidbody.constraints =  RigidbodyConstraints.None;
-        _rigidbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezeRotationX;
       
-        //_rigidbody.isKinematic = false;
-
-        //Debug.Log("Завершаю прыжок");
     }
     void Jump()
     {
@@ -103,8 +148,11 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
         if (_jump_play && _jump_move_x == 0)
         {
-            _rigidbody.constraints = RigidbodyConstraints.FreezePosition | RigidbodyConstraints.FreezeRotation;
-            _start_jump_position = transform.position;
+          
+            _start_jump_position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
+
+
+
             //Debug.Log("Начинаю прыжок");
         }
 
@@ -112,57 +160,53 @@ public class NewMonoBehaviourScript : MonoBehaviour
         Keyframe finish_key = jump_amplitude.keys[jump_amplitude.length - 1];
         float len_jump = finish_key.time - start_key.time;
 
-        if (_jump_play)
+
+        if(!_jump_play)
         {
-            bool exit_jump =  false;
+            Vector3 _start_jump_position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
+            List<Vector3> all_poits = getPointsCollisionJump(jump_amplitude, _start_jump_position, 100, -1, _horizontal_look);
+        }
+
+
+        if (_jump_play && _jump_move_x <= len_jump)
+        {
+
+
+            float posdition_x = transform.position.x;
 
             _jump_move_x += ((len_jump / jump_time) * Time.fixedDeltaTime);
-            
-            //_rigidbody.isKinematic = true;
-            float posdition_x = transform.position.x;
+
             if (_jump_move)
             {
                 posdition_x = (_start_jump_position.x + (_jump_move_x * _horizontal_look));
             }
 
-            RaycastHit hit;
-            // Does the ray intersect any objects excluding the player layer
-            if (Physics.Raycast(new Vector3(posdition_x, _start_jump_position.y + jump_amplitude.Evaluate(len_jump), transform.position.z), transform.TransformDirection(new Vector3(0, -1, 0)), out hit, Mathf.Infinity))
+            transform.position = new Vector3(posdition_x, _start_jump_position.y + 1 + jump_amplitude.Evaluate(_jump_move_x), transform.position.z);
 
-            {   
 
-                if(transform.position.y - (transform.TransformDirection(new Vector3(0, -1, 0)) * hit.distance).y <= 2)
+            List<Vector3> all_poits = getPointsCollisionJump(jump_amplitude, _start_jump_position, 100, 0, _horizontal_look);
+            for ( int i = 0;  i < all_poits.Count; i++)
+            {
+           
+                if (Vector3.Distance(all_poits[i], new Vector3(transform.position.x, transform.position.y - 1, transform.position.z)) < 0.2f)
                 {
-                    exit_jump =  true;
+                    Debug.Log("Stop jump");
+                    _jump_play = false;
                     JumpStop();
+                    break;
+                  
                 }
-                Debug.DrawRay(transform.position, transform.TransformDirection(new Vector3(0, -1, 0)) * hit.distance, Color.yellow);
-                Debug.Log("Did Hit" + (transform.position.y - (transform.TransformDirection(new Vector3(0, -1, 0)) * hit.distance).y));
-            }
-            else
-            {
-                Debug.DrawRay(transform.position, transform.TransformDirection(new Vector3(0, -1, 0)) * 1000, Color.white);
-                Debug.Log("Did not Hit");
-            }
-
-            if(exit_jump == false)
-            {
-                transform.position = new Vector3(posdition_x, _start_jump_position.y + jump_amplitude.Evaluate(_jump_move_x), transform.position.z);
-
 
             }
-
-
-
-
-            //Debug.Log("y =" + jump_amplitude.Evaluate(_jump_move_x) + "x = " + _jump_move_x);
+            
         }
 
 
-        if (_jump_move_x >= len_jump)
+        if (_jump_move_x > len_jump && _jump_play)
         {
             JumpStop();
-            
+
+
         }
 
         if (_jump_play == false)
@@ -171,36 +215,26 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
         }
     }
-    void FixedUpdate()
-    {
-        // пенести  сюда логику 
-
-        Jump();
-    }
+   
     void Update()
     {
+        Jump();
         bool _jump_move_ = false;
         Vector3 input = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
-        if (_jump_play == false && input != Vector3.zero)
-        {
-            _jump_move_ = true;
-        }
-        else
-        {
-            _jump_move_ = false;
-        }
+         
+         
 
-        if (Input.GetKeyDown(KeyCode.Space) && _jump_collider_bootom)
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (_jump_move_)
+
+            if (_jump_play == false && input != Vector3.zero)
             {
                 _jump_move = true;
+
             }
-            
             _jump_play = true;
-            _jump_collider_bootom = false;
 
-
+            _jump_vector.x = _horizontal_look;
         }
 
         //Debug.Log(_jump_play + " " + _jump_collider_bootom);
@@ -214,9 +248,30 @@ public class NewMonoBehaviourScript : MonoBehaviour
         {
             input.x = 1;
         }
-        if (input != Vector3.zero && _jump_play == false)
+
+        if (input != Vector3.zero && ((jump_controll  && _jump_play) || !_jump_play))
         {
+ 
             _horizontal_look = input.x;
+
+
+            
+        }
+
+        if (_jump_play && _jump_vector.x != _horizontal_look && jump_controll)
+        {
+
+            Keyframe start_key = jump_amplitude.keys[0];
+            Keyframe finish_key = jump_amplitude.keys[jump_amplitude.length - 1];
+            float len_jump = finish_key.time - start_key.time;
+
+            float delta = ( Mathf.Abs(_start_jump_position.x - transform.position.x) *2 ) * _horizontal_look;
+
+
+            _jump_vector.x = _horizontal_look;
+
+            _start_jump_position.x -= delta;
+
         }
 
         float z = Mathf.Sin(Mathf.PI * _arge);
@@ -241,13 +296,49 @@ public class NewMonoBehaviourScript : MonoBehaviour
          transform.LookAt(new Vector3((x + transform.position.x), transform.position.y, (z + transform.position.z)));
          if (_horizontal_look == z)
          {
-             _rigidbody.MovePosition(transform.position + input * Time.fixedDeltaTime * speed);
+            
+            // _rigidbody.MovePosition(_rigidbody.position + input * Time.fixedDeltaTime * speed);
+            if (_jump_play == false)
+            {
+                input.y = -2f;
+                Vector3 move = input * Time.fixedDeltaTime * speed;
+
+                if (platform)
+                {
+                   Vector3 delata =  platform.gameObject.transform.position - platform_pre_pos;
+                    move += delata;
+                    platform_pre_pos = platform.gameObject.transform.position;
+                }
+ 
+                _rigidbody.Move(move);
+            }
+            
          }
+         if(transform.position.y < -10)
+        {
+            SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
+        }
+        
 
+        
+
+
+
+    }
+
+
+
+    private void OnTriggerEnter(Collider other)
+    {
+      
+        platform = other.gameObject;
+        platform_pre_pos = other.transform.position;
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        platform = null;
        
-
-
-
-
+        // other.gameObject.transform.SetParent(null);
     }
 }

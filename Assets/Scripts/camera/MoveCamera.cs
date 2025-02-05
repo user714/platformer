@@ -44,23 +44,19 @@ public class MoveCamera : MonoBehaviour
 
             GetPointDraf();
 
-            LookToPlayer();
+            
             
 
         }
-
-    }
-    void FixedUpdate()
-    {
-
-
         LookToPlayer();
+
     }
+   
 
 
     void LookToPlayer()
     {
-      // transform.LookAt(player);
+      transform.LookAt(player);
 
         int step_points = 0;
 
