@@ -131,10 +131,17 @@ public class Platform : MonoBehaviour
         float procent = (pluer_delta_phat * 100 / lien_x_points) * 0.01f;
 
 
-  
+        if(procent <= 1 && procent > 0)
+        {
+          
+
+            platform.position = GetPoint(procent, step_points);
 
 
-       platform.position = GetPoint(procent, step_points);
+        }
+
+      
+       
     }
 
     void GetPointDraf()

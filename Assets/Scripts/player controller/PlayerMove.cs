@@ -1,11 +1,7 @@
 using System.Collections.Generic;
- 
 using UnityEngine;
  
 using UnityEngine.SceneManagement;
- 
- 
-
 [ExecuteAlways]
 
 public class NewMonoBehaviourScript : MonoBehaviour
@@ -21,6 +17,8 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
     GameObject platform;
     float deplata_platform_x;
+    Vector3 _jump_pos;
+
 
 
 
@@ -148,7 +146,8 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
         if (_jump_play && _jump_move_x == 0)
         {
-          
+
+         
             _start_jump_position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
 
 
@@ -202,11 +201,15 @@ public class NewMonoBehaviourScript : MonoBehaviour
         }
 
 
-        if (_jump_move_x > len_jump && _jump_play)
+        if (_jump_move_x > len_jump)
         {
-            JumpStop();
 
 
+            
+           
+                    JumpStop();
+           
+ 
         }
 
         if (_jump_play == false)
@@ -218,24 +221,49 @@ public class NewMonoBehaviourScript : MonoBehaviour
    
     void Update()
     {
+
+
         Jump();
+
         bool _jump_move_ = false;
         Vector3 input = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
-         
-         
 
-        if (Input.GetKeyDown(KeyCode.Space))
+
+
+ 
+
+
+
+        if (Input.GetKey(KeyCode.Space))
         {
-
-            if (_jump_play == false && input != Vector3.zero)
+         
+            Ray ray = new Ray(new Vector3(transform.position.x, transform.position.y , transform.position.z), new Vector3(0, -1,0));
+          
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
             {
-                _jump_move = true;
+                Debug.DrawLine(new Vector3(transform.position.x, transform.position.y, transform.position.z), new Vector3(transform.position.x, transform.position.y - 2f, transform.position.z), Color.blue);
+            
+                if (hit.collider)
+                {
+                     
+                    if(hit.distance <= 1.09)
+                    {
+                        if (_jump_play == false && input != Vector3.zero)
+                        {
+                            _jump_move = true;
 
+                        }
+                        _jump_play = true;
+
+                        _jump_vector.x = _horizontal_look;
+                    }
+                    
+                }
             }
-            _jump_play = true;
-
-            _jump_vector.x = _horizontal_look;
         }
+
+        
 
         //Debug.Log(_jump_play + " " + _jump_collider_bootom);
 
@@ -348,13 +376,16 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
     }
 
+     
 
+   
 
     private void OnTriggerEnter(Collider other)
     {
       
         platform = other.gameObject;
         deplata_platform_x = other.transform.position.x - transform.position.x;
+        JumpStop();
     }
 
     private void OnTriggerExit(Collider other)
